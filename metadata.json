@@ -1,0 +1,5 @@
+{
+  "name": "Debt Crusher",
+  "description": "An interactive debt payoff calculator comparing Snowball and Avalanche strategies.",
+  "requestFramePermissions": []
+}
