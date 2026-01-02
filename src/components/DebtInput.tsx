@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, DollarSign, Percent } from 'lucide-react';
+import { DeleteRounded, AttachMoneyRounded, PercentRounded, CreditCardRounded } from '@mui/icons-material';
 import { Debt } from '../types';
 import { clsx } from 'clsx';
 
@@ -84,76 +84,52 @@ export const DebtInput: React.FC<DebtInputProps> = ({ debts, onChange }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-800">Your Debts</h2>
-        <button
-          onClick={addDebt}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-md active:scale-95"
-        >
-          <Plus size={18} /> Add Debt
-        </button>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1">
         {debts.map((debt) => (
           <div
             key={debt.id}
-            className="relative p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group"
+            className="relative p-4 bg-white rounded-xl border border-gray-200 group min-h-[188px] flex flex-col justify-center"
           >
             <button
               onClick={() => removeDebt(debt.id)}
-              className="absolute top-2 right-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full p-1.5 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+              className="absolute top-2 right-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full p-1.5 transition-all z-10"
               aria-label="Remove debt"
             >
-              <Trash2 size={16} />
+              <DeleteRounded sx={{ fontSize: 16 }} />
             </button>
 
-            <div className="space-y-3 pt-2">
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Debt Name</label>
-                <input
-                  type="text"
-                  value={debt.name}
-                  onChange={(e) => updateDebt(debt.id, 'name', e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium text-gray-900"
-                  placeholder="e.g. Visa"
-                />
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 bg-gray-100 text-gray-600 rounded-full flex-shrink-0">
+                <CreditCardRounded sx={{ fontSize: 24 }} />
               </div>
+              <div className="min-w-0 pr-6">
+                <h3 className="font-bold text-gray-800 text-lg truncate">{debt.name}</h3>
+              </div>
+            </div>
 
+            <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Balance</label>
+                  <label className="block text-sm text-gray-600 font-bold mb-1">Balance</label>
                   <div className="relative">
-                    <DollarSign size={14} className="absolute left-2.5 top-3 text-gray-400" />
+                    <AttachMoneyRounded sx={{ fontSize: 14 }} className="absolute left-2.5 top-3 text-gray-400" />
                     <NumberInput
                       value={debt.balance}
                       onChange={(val) => updateDebt(debt.id, 'balance', val)}
-                      className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-gray-900"
+                      className="w-full pl-7 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-bold text-gray-900"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">APR (%)</label>
+                  <label className="block text-sm text-gray-600 font-bold mb-1">APR (%)</label>
                   <div className="relative">
-                    <Percent size={14} className="absolute right-2.5 top-3 text-gray-400" />
+                    <PercentRounded sx={{ fontSize: 14 }} className="absolute right-2.5 top-3 text-gray-400" />
                     <NumberInput
                       value={debt.apr}
                       onChange={(val) => updateDebt(debt.id, 'apr', val)}
-                      className="w-full pl-3 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-gray-900"
+                      className="w-full pl-3 pr-7 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-bold text-gray-900"
                     />
                   </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Min Payment</label>
-                <div className="relative">
-                  <DollarSign size={14} className="absolute left-2.5 top-3 text-gray-400" />
-                  <NumberInput
-                    value={debt.minPayment}
-                    onChange={(val) => updateDebt(debt.id, 'minPayment', val)}
-                    className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-gray-900"
-                  />
                 </div>
               </div>
             </div>

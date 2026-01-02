@@ -12,7 +12,7 @@ import {
   AreaChart,
   Area
 } from 'recharts';
-import { Calendar, DollarSign, TrendingUp } from 'lucide-react';
+import { CalendarTodayRounded, AttachMoneyRounded, TrendingUpRounded } from '@mui/icons-material';
 
 interface ResultsDashboardProps {
   result: PayoffResult;
@@ -23,60 +23,65 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, debt
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
 
-  const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+  const colors = ['#10b981', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-4">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="p-3 bg-blue-100 text-blue-600 rounded-full flex-shrink-0">
-            <Calendar size={24} />
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm text-gray-500 font-medium truncate">Debt Free In</div>
-            <div className="text-2xl font-bold text-gray-900">
-              {Math.floor(result.monthsToFree / 12)}y {result.monthsToFree % 12}m
+    <div className="flex flex-col gap-8">
+      {/* Stats Section - Top Row */}
+      <div className="p-4 bg-white rounded-xl border border-gray-200 flex flex-col sm:flex-row gap-4 w-full">
+          <div className="flex-1 flex items-center gap-4">
+            <div className="p-3 bg-gray-100 text-gray-600 rounded-full flex-shrink-0">
+              <CalendarTodayRounded />
             </div>
-            <div className="text-xs text-gray-400 truncate">Total {result.monthsToFree} months</div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="p-3 bg-red-100 text-red-600 rounded-full flex-shrink-0">
-            <TrendingUp size={24} />
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm text-gray-500 font-medium truncate">Total Interest</div>
-            <div className="text-2xl font-bold text-gray-900">{formatCurrency(result.totalInterest)}</div>
-            <div className="text-xs text-gray-400 truncate">Paid over time</div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="p-3 bg-green-100 text-green-600 rounded-full flex-shrink-0">
-            <DollarSign size={24} />
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm text-gray-500 font-medium truncate">Total Paid</div>
-            <div className="text-2xl font-bold text-gray-900">
-              {formatCurrency(result.totalInterest + debts.reduce((sum, d) => sum + d.balance, 0))}
+            <div className="min-w-0">
+              <div className="text-sm text-gray-600 font-bold truncate">Debt free in</div>
+              <div className="flex items-baseline gap-2">
+                <div className="text-2xl font-extrabold text-gray-900">
+                  {Math.floor(result.monthsToFree / 12)}y {result.monthsToFree % 12}m
+                </div>
+                <div className="text-sm font-medium text-gray-500 truncate">
+                  {new Date(new Date().setMonth(new Date().getMonth() + result.monthsToFree)).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }).replace(' ', " '")}
+                </div>
+              </div>
             </div>
-            <div className="text-xs text-gray-400 truncate">Principal + Interest</div>
+          </div>
+
+          <div className="hidden sm:block w-px bg-gray-200 self-stretch"></div>
+
+          <div className="flex-1 flex items-center gap-4">
+            <div className="p-3 bg-gray-100 text-gray-600 rounded-full flex-shrink-0">
+              <TrendingUpRounded />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm text-gray-600 font-bold truncate">Total interest</div>
+              <div className="text-2xl font-extrabold text-gray-900">{formatCurrency(result.totalInterest)}</div>
+            </div>
+          </div>
+
+          <div className="hidden sm:block w-px bg-gray-200 self-stretch"></div>
+
+          <div className="flex-1 flex items-center gap-4">
+            <div className="p-3 bg-gray-100 text-gray-600 rounded-full flex-shrink-0">
+              <AttachMoneyRounded />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm text-gray-600 font-bold truncate">Total paid</div>
+              <div className="text-2xl font-extrabold text-gray-900">
+                {formatCurrency(result.totalInterest + debts.reduce((sum, d) => sum + d.balance, 0))}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Chart */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">Payoff Timeline</h3>
-        <div className="h-[300px] w-full">
+        {/* Chart Section - Bottom Row */}
+        <div className="w-full h-[300px] bg-gray-50 rounded-xl p-4 border border-gray-100">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Payoff timeline</h3>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={result.chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <AreaChart data={result.chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -84,7 +89,11 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, debt
                 dataKey="month" 
                 stroke="#9ca3af" 
                 tick={{fontSize: 12}}
-                tickFormatter={(val) => `Mo ${val}`}
+                tickFormatter={(val) => {
+                  const date = new Date();
+                  date.setMonth(date.getMonth() + val);
+                  return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }).replace(' ', " '");
+                }}
               />
               <YAxis 
                 stroke="#9ca3af" 
@@ -93,12 +102,17 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, debt
               />
               <Tooltip 
                 formatter={(value: number) => formatCurrency(value)}
+                labelFormatter={(label) => {
+                  const date = new Date();
+                  date.setMonth(date.getMonth() + (label as number));
+                  return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }).replace(' ', " '");
+                }}
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
               />
               <Area 
                 type="monotone" 
                 dataKey="totalBalance" 
-                stroke="#6366f1" 
+                stroke="#10b981" 
                 strokeWidth={3}
                 fillOpacity={1} 
                 fill="url(#colorTotal)" 
@@ -108,30 +122,5 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, debt
           </ResponsiveContainer>
         </div>
       </div>
-      
-      {/* Payoff Order */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">Victory Milestones</h3>
-        <div className="space-y-3">
-          {result.payoffOrder.map((item, index) => (
-            <div key={index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-              <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white font-bold rounded-full text-sm">
-                {index + 1}
-              </div>
-              <div className="flex-grow">
-                <div className="font-bold text-gray-900">{item.name}</div>
-                <div className="text-sm text-gray-500">Paid off in month {item.month}</div>
-              </div>
-              <div className="text-indigo-600 font-bold text-sm">
-                {Math.floor(item.month / 12) > 0 ? `${Math.floor(item.month / 12)}y ` : ''}{item.month % 12}m
-              </div>
-            </div>
-          ))}
-          {result.payoffOrder.length === 0 && (
-            <div className="text-gray-500 text-center py-4">Add debts and budget to see your milestones!</div>
-          )}
-        </div>
-      </div>
-    </div>
   );
 };

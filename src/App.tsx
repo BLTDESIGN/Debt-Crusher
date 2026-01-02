@@ -11,138 +11,157 @@ import { StrategySelector } from './components/StrategySelector';
 import { ResultsDashboard } from './components/ResultsDashboard';
 import { BalanceTransferSimulator } from './components/BalanceTransferSimulator';
 import { BudgetAnalyzer } from './components/BudgetAnalyzer';
-import { Calculator, DollarSign, Info, CreditCard, LayoutDashboard, Wallet } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { 
+  InfoRounded, 
+  DashboardRounded, 
+  AccountBalanceWalletRounded, 
+  AddRounded, 
+  PercentRounded, 
+  TrendingDownRounded, 
+  EditRounded, 
+  CheckRounded 
+} from '@mui/icons-material';
 import { clsx } from 'clsx';
 
 const INITIAL_DEBTS: Debt[] = [
-  { id: '1', name: 'Credit Card A (High APR)', balance: 15000, apr: 24.99, minPayment: 450 },
-  { id: '2', name: 'Credit Card B (Big Bal)', balance: 40000, apr: 18.99, minPayment: 1000 },
-  { id: '3', name: 'Personal Loan', balance: 20000, apr: 12.99, minPayment: 400 },
+  { id: '1', name: 'Credit Card 1', balance: 75000, apr: 24.99, minPayment: 1562 },
 ];
 
 type Tab = 'snowball' | 'transfer' | 'budget';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('snowball');
+  const [analysisTab, setAnalysisTab] = useState<'baseline' | 'transfer' | 'consolidation'>('baseline');
   
   // Snowball State
   const [debts, setDebts] = useState<Debt[]>(INITIAL_DEBTS);
-  const [extraPayment, setExtraPayment] = useState<number>(500);
   const [strategy, setStrategy] = useState<Strategy>('avalanche');
+  const [isEditingBudget, setIsEditingBudget] = useState(false);
 
   const totalMinPayment = useMemo(() => debts.reduce((sum, d) => sum + d.minPayment, 0), [debts]);
   const totalBalance = useMemo(() => debts.reduce((sum, d) => sum + d.balance, 0), [debts]);
+  const totalMonthlyInterest = useMemo(() => debts.reduce((sum, d) => sum + (d.balance * (d.apr / 100) / 12), 0), [debts]);
+  const weightedAvgApr = useMemo(() => {
+    if (totalBalance === 0) return 0;
+    const weightedSum = debts.reduce((sum, d) => sum + (d.balance * d.apr), 0);
+    return weightedSum / totalBalance;
+  }, [debts, totalBalance]);
   
-  // Calculate total monthly budget (min + extra)
-  const monthlyBudget = totalMinPayment + extraPayment;
+  // Initialize total budget to cover interest only by default
+  const [totalBudget, setTotalBudget] = useState<number>(() => {
+    return Math.ceil(INITIAL_DEBTS.reduce((sum, d) => sum + (d.balance * (d.apr / 100) / 12), 0));
+  });
+
+  // Ensure we always pay at least the minimums
+  const effectiveBudget = Math.max(totalBudget, totalMinPayment);
+  const totalMonthlyPrincipal = Math.max(0, effectiveBudget - totalMonthlyInterest);
 
   const result = useMemo(() => {
-    return calculatePayoff(debts, monthlyBudget, strategy);
-  }, [debts, monthlyBudget, strategy]);
+    return calculatePayoff(debts, effectiveBudget, strategy);
+  }, [debts, effectiveBudget, strategy]);
 
   // Calculate the "other" strategy for comparison
   const comparisonResult = useMemo(() => {
     const otherStrategy = strategy === 'snowball' ? 'avalanche' : 'snowball';
-    return calculatePayoff(debts, monthlyBudget, otherStrategy);
-  }, [debts, monthlyBudget, strategy]);
+    return calculatePayoff(debts, effectiveBudget, otherStrategy);
+  }, [debts, effectiveBudget, strategy]);
 
   const savings = comparisonResult.totalInterest - result.totalInterest;
 
   const handleApplyBudget = (availableAmount: number) => {
-    // The available amount is the TOTAL available for debt.
-    // We need to subtract the minimum payments to find the "extra" payment.
-    const newExtra = Math.max(0, availableAmount - totalMinPayment);
-    setExtraPayment(newExtra);
+    setTotalBudget(availableAmount);
     setActiveTab('snowball');
   };
 
+  const handleAddDebt = () => {
+    const newDebt: Debt = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: `Credit Card ${debts.length + 1}`,
+      balance: 5000,
+      apr: 19.99,
+      minPayment: 100
+    };
+    setDebts([...debts, newDebt]);
+    setTotalBudget(prev => prev + newDebt.minPayment);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20">
+    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
       {/* Hero Header */}
-      <div className="bg-indigo-700 text-white pt-12 pb-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-        <div className="max-w-6xl mx-auto relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8"
+      <div className="bg-white border-b border-gray-200 pt-8 pb-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div 
+            className="flex items-center gap-4"
           >
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20 shadow-lg">
-                <Calculator size={32} className="text-indigo-100" />
-              </div>
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">Debt Crusher</h1>
-                <p className="text-indigo-200 text-lg mt-1 font-medium">Master your financial destiny.</p>
-              </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">Debt Crusher</h1>
             </div>
-          </motion.div>
+          </div>
 
           {/* Navigation Tabs */}
-          <div className="flex flex-wrap gap-2 bg-indigo-800/50 p-1 rounded-xl backdrop-blur-md inline-flex">
+          <div className="flex flex-wrap gap-2 bg-gray-100 p-1 rounded-xl inline-flex">
             <button
               onClick={() => setActiveTab('snowball')}
               className={clsx(
                 "flex items-center gap-2 px-4 sm:px-6 py-3 rounded-lg text-sm font-bold transition-all duration-200",
                 activeTab === 'snowball' 
-                  ? "bg-white text-indigo-700 shadow-md" 
-                  : "text-indigo-200 hover:bg-white/10"
+                  ? "bg-white text-emerald-600 border border-gray-200" 
+                  : "text-gray-500 hover:bg-gray-200/50 hover:text-gray-700"
               )}
             >
-              <LayoutDashboard size={18} />
-              Payoff Planner
+              <DashboardRounded sx={{ fontSize: 18 }} />
+              Planning view
             </button>
             <button
               onClick={() => setActiveTab('budget')}
               className={clsx(
                 "flex items-center gap-2 px-4 sm:px-6 py-3 rounded-lg text-sm font-bold transition-all duration-200",
                 activeTab === 'budget' 
-                  ? "bg-white text-indigo-700 shadow-md" 
-                  : "text-indigo-200 hover:bg-white/10"
+                  ? "bg-white text-emerald-600 border border-gray-200" 
+                  : "text-gray-500 hover:bg-gray-200/50 hover:text-gray-700"
               )}
             >
-              <Wallet size={18} />
-              Salary Analyzer
-            </button>
-            <button
-              onClick={() => setActiveTab('transfer')}
-              className={clsx(
-                "flex items-center gap-2 px-4 sm:px-6 py-3 rounded-lg text-sm font-bold transition-all duration-200",
-                activeTab === 'transfer' 
-                  ? "bg-emerald-500 text-white shadow-md" 
-                  : "text-indigo-200 hover:bg-white/10"
-              )}
-            >
-              <CreditCard size={18} />
-              Balance Transfer
+              <AccountBalanceWalletRounded sx={{ fontSize: 18 }} />
+              Salary view
             </button>
           </div>
         </div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-20">
-        <AnimatePresence mode="wait">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-20">
+        <div>
           {activeTab === 'snowball' ? (
-            <motion.div
-              key="snowball"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+            <div
+              className="space-y-8"
             >
-              {/* Left Column: Inputs */}
-              <div className="lg:col-span-2 space-y-8">
-                {/* Strategy Selection */}
-                <section className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+              {/* Inputs Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Debts Input & Summary Combined */}
+                <section className="bg-white rounded-2xl border border-gray-200 p-6 relative">
+                  <div className="mb-8 pr-20">
+                    <div className="text-sm text-gray-600 font-bold truncate mb-1">Total debt</div>
+                    <div className="text-2xl font-extrabold text-gray-900 tracking-tight">${totalBalance.toLocaleString()}</div>
+                  </div>
+                  
+                  <button
+                    onClick={handleAddDebt}
+                    className="absolute top-6 right-6 w-16 h-16 bg-gray-100 text-gray-600 rounded-2xl flex items-center justify-center hover:text-emerald-600 transition-all active:scale-95"
+                    aria-label="Add Debt"
+                  >
+                    <AddRounded sx={{ fontSize: 32 }} />
+                  </button>
+
+                  <DebtInput debts={debts} onChange={setDebts} />
+                </section>
+
+                {/* Strategy Selection - Hidden */}
+                <section className="hidden bg-white rounded-2xl border border-gray-200 p-6">
                   <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    1. Choose Your Strategy
+                    Choose your strategy
                     <div className="group relative">
-                      <Info size={16} className="text-gray-400 cursor-help" />
+                      <InfoRounded sx={{ fontSize: 16 }} className="text-gray-400 cursor-help" />
                       <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-3 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                        Snowball builds momentum by paying small debts first. Avalanche saves money by paying high interest first.
+                        Lowest Balance builds momentum. Highest Interest saves money.
                       </div>
                     </div>
                   </h2>
@@ -150,14 +169,14 @@ export default function App() {
                   
                   {savings !== 0 && (
                     <div className="mt-4 p-3 bg-yellow-50 text-yellow-800 text-sm rounded-lg border border-yellow-100 flex items-center gap-2">
-                      <Info size={16} />
+                      <InfoRounded sx={{ fontSize: 16 }} />
                       {savings > 0 ? (
                         <span>
-                          You save <strong>${Math.round(savings).toLocaleString()}</strong> in interest with this strategy compared to {strategy === 'snowball' ? 'Avalanche' : 'Snowball'}!
+                          You save <strong>${Math.round(savings).toLocaleString()}</strong> in interest with this strategy compared to {strategy === 'snowball' ? 'Highest Interest' : 'Lowest Balance'}!
                         </span>
                       ) : (
                         <span>
-                          This strategy costs <strong>${Math.round(Math.abs(savings)).toLocaleString()}</strong> more than {strategy === 'snowball' ? 'Avalanche' : 'Snowball'}, but might feel better psychologically.
+                          This strategy costs <strong>${Math.round(Math.abs(savings)).toLocaleString()}</strong> more than {strategy === 'snowball' ? 'Highest Interest' : 'Lowest Balance'}, but might feel better psychologically.
                         </span>
                       )}
                     </div>
@@ -165,86 +184,156 @@ export default function App() {
                 </section>
 
                 {/* Budget Input */}
-                <section className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-                  <h2 className="text-lg font-bold text-gray-800 mb-4">2. Define Your Budget</h2>
-                  <div className="grid sm:grid-cols-2 gap-6">
-                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                      <div className="text-sm text-gray-500 mb-1">Required Minimums</div>
-                      <div className="text-2xl font-bold text-gray-900">${totalMinPayment.toLocaleString()}</div>
-                      <div className="text-xs text-gray-400 mt-1">Sum of all min payments</div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Extra Monthly Payment
-                      </label>
-                      <div className="relative">
-                        <DollarSign size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <section className="bg-white rounded-2xl border border-gray-200 p-6 relative">
+                  <div className="mb-8 pr-20">
+                    <div className="text-sm text-gray-600 font-bold truncate mb-1">Total monthly contribution</div>
+                    <div className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center">
+                      $
+                      {isEditingBudget ? (
                         <input
-                          type="number"
-                          value={extraPayment}
-                          onChange={(e) => setExtraPayment(Math.max(0, parseFloat(e.target.value) || 0))}
-                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg font-bold transition-shadow"
+                          type="text"
+                          value={totalBudget.toLocaleString()}
+                          onChange={(e) => {
+                            // Remove non-numeric characters except decimal point
+                            const rawValue = e.target.value.replace(/[^0-9.]/g, '');
+                            // Prevent multiple decimal points
+                            if ((rawValue.match(/\./g) || []).length > 1) return;
+                            
+                            setTotalBudget(Math.max(0, parseFloat(rawValue) || 0));
+                          }}
+                          className="bg-transparent border-none focus:ring-0 p-0 w-48 font-extrabold text-gray-900 placeholder-gray-300"
+                          placeholder="0"
+                          autoFocus
                         />
-                      </div>
-                      <div className="text-xs text-gray-500 mt-2">
-                        Total Monthly Budget: <span className="font-bold text-indigo-600">${monthlyBudget.toLocaleString()}</span>
-                      </div>
+                      ) : (
+                        totalBudget.toLocaleString()
+                      )}
                     </div>
                   </div>
-                </section>
 
-                {/* Debts Input */}
-                <section className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-                  <DebtInput debts={debts} onChange={setDebts} />
-                </section>
-              </div>
+                  <button
+                    onClick={() => setIsEditingBudget(!isEditingBudget)}
+                    className="absolute top-6 right-6 w-16 h-16 bg-gray-100 text-gray-600 rounded-2xl flex items-center justify-center hover:text-emerald-600 transition-all active:scale-95"
+                    aria-label={isEditingBudget ? "Save Contribution" : "Edit Contribution"}
+                  >
+                    {isEditingBudget ? <CheckRounded sx={{ fontSize: 32 }} /> : <EditRounded sx={{ fontSize: 32 }} />}
+                  </button>
+                  
+                  <div className="space-y-6">
+                    {/* Breakdown */}
+                    <div className="">
+                      <div className="p-4 bg-white rounded-xl border border-gray-200 flex flex-col sm:flex-row gap-4 w-full min-h-[188px]">
+                        <div className="flex-1 flex items-center gap-4">
+                          <div className="p-3 bg-gray-100 text-gray-600 rounded-full flex-shrink-0">
+                            <PercentRounded sx={{ fontSize: 24 }} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm text-gray-600 font-bold truncate">Interest / mo</div>
+                            <div className="text-xl font-bold text-gray-900 truncate">${Math.round(totalMonthlyInterest).toLocaleString()}</div>
+                          </div>
+                        </div>
 
-              {/* Right Column: Results */}
-              <div className="lg:col-span-1">
-                <div className="sticky top-6 space-y-6">
-                  <div className="bg-indigo-900 text-white p-6 rounded-2xl shadow-xl">
-                    <h2 className="text-xl font-bold mb-4">Summary</h2>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="text-indigo-300 text-sm">Total Debt</div>
-                        <div className="text-3xl font-bold">${totalBalance.toLocaleString()}</div>
-                      </div>
-                      <div className="pt-4 border-t border-indigo-800">
-                        <div className="text-indigo-300 text-sm">Debt Free Date</div>
-                        <div className="text-2xl font-bold">
-                          {new Date(new Date().setMonth(new Date().getMonth() + result.monthsToFree)).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                        <div className="hidden sm:block w-px bg-gray-200 self-stretch"></div>
+
+                        <div className="flex-1 flex items-center gap-4">
+                          <div className="p-3 bg-gray-100 text-gray-600 rounded-full flex-shrink-0">
+                            <TrendingDownRounded sx={{ fontSize: 24 }} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm text-gray-600 font-bold truncate">Principal / mo</div>
+                            <div className="text-xl font-bold text-gray-900 truncate">
+                              ${Math.round(totalMonthlyPrincipal).toLocaleString()}
+                            </div>
+                            <div className="text-xs mt-1 text-gray-400 truncate">
+                              {totalMonthlyPrincipal > 0 ? "" : "Increase budget to pay off faster!"}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
+                    
+                    {totalBudget < totalMinPayment && (
+                      <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+                        <InfoRounded sx={{ fontSize: 16 }} />
+                        Your budget is less than the required minimums (${totalMinPayment.toLocaleString()}). We'll use the minimums for calculation.
+                      </div>
+                    )}
                   </div>
-
-                  <ResultsDashboard result={result} debts={debts} />
-                </div>
+                </section>
               </div>
-            </motion.div>
-          ) : activeTab === 'budget' ? (
-            <motion.div
-              key="budget"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+
+              {/* Merged Analysis Section */}
+              <section className="bg-white rounded-2xl border border-gray-200 p-6">
+                <div className="flex flex-wrap gap-2 bg-gray-100 p-1 rounded-xl inline-flex mb-6">
+                  <button
+                    onClick={() => setAnalysisTab('baseline')}
+                    className={clsx(
+                      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200",
+                      analysisTab === 'baseline' 
+                        ? "bg-white text-emerald-600 shadow-sm" 
+                        : "text-gray-500 hover:text-gray-700"
+                    )}
+                  >
+                    Monthly Payments
+                  </button>
+                  <button
+                    onClick={() => setAnalysisTab('transfer')}
+                    className={clsx(
+                      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200",
+                      analysisTab === 'transfer' 
+                        ? "bg-white text-emerald-600 shadow-sm" 
+                        : "text-gray-500 hover:text-gray-700"
+                    )}
+                  >
+                    Split / Transfer
+                  </button>
+                  <button
+                    onClick={() => setAnalysisTab('consolidation')}
+                    className={clsx(
+                      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200",
+                      analysisTab === 'consolidation' 
+                        ? "bg-white text-emerald-600 shadow-sm" 
+                        : "text-gray-500 hover:text-gray-700"
+                    )}
+                  >
+                    Consolidation
+                  </button>
+                </div>
+
+                {analysisTab === 'baseline' && (
+                  <ResultsDashboard result={result} debts={debts} />
+                )}
+
+                {analysisTab === 'transfer' && (
+                  <BalanceTransferSimulator 
+                    currentDebt={totalBalance} 
+                    currentApr={weightedAvgApr} 
+                    currentMonthlyPayment={totalBudget}
+                    baselineMonthsToPayoff={result.monthsToFree}
+                    baselineTotalInterest={result.totalInterest}
+                    mode="transfer"
+                  />
+                )}
+
+                {analysisTab === 'consolidation' && (
+                  <BalanceTransferSimulator 
+                    currentDebt={totalBalance} 
+                    currentApr={weightedAvgApr} 
+                    currentMonthlyPayment={totalBudget}
+                    baselineMonthsToPayoff={result.monthsToFree}
+                    baselineTotalInterest={result.totalInterest}
+                    mode="loan"
+                  />
+                )}
+              </section>
+            </div>
+          ) : (
+            <div
             >
               <BudgetAnalyzer onApplyBudget={handleApplyBudget} />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="transfer"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <BalanceTransferSimulator />
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        </div>
       </main>
     </div>
   );

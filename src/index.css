@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+body {
+  font-family: "Google Sans Flex", sans-serif;
+  font-variation-settings: 'slnt' -10, 'wdth' 148.4, 'GRAD' 0, 'ROND' 100;
+}
+
+@layer base {
+  input[type=number]::-webkit-inner-spin-button, 
+  input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+  }
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
+}
