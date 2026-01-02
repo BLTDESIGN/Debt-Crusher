@@ -268,8 +268,8 @@ export const BalanceTransferSimulator: React.FC<{
             ? "bg-orange-50 border-orange-100" 
             : "bg-gray-50 border-gray-200"
       )}>
-        <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
-          <div className="flex-1">
+        <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between">
+          <div>
             <h3 className={clsx(
               "text-sm font-bold uppercase tracking-wide mb-2", 
               interestSavings > 0 ? "text-emerald-700" : interestSavings < 0 ? "text-orange-700" : "text-gray-500"
@@ -277,31 +277,32 @@ export const BalanceTransferSimulator: React.FC<{
               {interestSavings >= 0 ? "Projected Interest Savings" : "Additional Interest Cost"}
             </h3>
             <div className={clsx(
-              "text-5xl font-extrabold mb-2", 
+              "text-5xl font-extrabold", 
               interestSavings > 0 ? "text-emerald-900" : interestSavings < 0 ? "text-orange-900" : "text-gray-900"
             )}>
               {formatCurrency(Math.abs(interestSavings))}
             </div>
-            <p className={clsx(
-              "text-sm", 
-              interestSavings > 0 ? "text-emerald-800" : interestSavings < 0 ? "text-orange-800" : "text-gray-500"
-            )}>
-              {interestSavings > 0 
-                ? "Compared to your current payoff plan." 
-                : interestSavings < 0
-                  ? "This strategy costs more in interest than your current plan."
-                  : "This strategy breaks even with your current plan."}
-            </p>
           </div>
 
           {timeSavings !== 0 && (
-            <div className="p-4 bg-white rounded-xl border border-gray-100 shadow-sm min-w-[200px]">
-              <div className="flex items-center gap-2 text-gray-500 font-bold text-sm mb-1">
-                <CalendarTodayRounded sx={{ fontSize: 16 }} />
-                Time Saved
+            <div className="flex items-center gap-4">
+              <div className={clsx(
+                "p-3 rounded-full flex-shrink-0",
+                interestSavings > 0 ? "bg-emerald-100 text-emerald-600" : interestSavings < 0 ? "bg-orange-100 text-orange-600" : "bg-gray-100 text-gray-600"
+              )}>
+                <CalendarTodayRounded sx={{ fontSize: 24 }} />
               </div>
-              <div className="text-2xl font-bold text-gray-900">
-                {Math.abs(timeSavings)} months {timeSavings > 0 ? 'sooner' : 'later'}
+              <div>
+                <div className={clsx(
+                  "text-sm font-bold",
+                  interestSavings > 0 ? "text-emerald-800" : interestSavings < 0 ? "text-orange-800" : "text-gray-600"
+                )}>Time Saved</div>
+                <div className={clsx(
+                  "text-xl font-bold",
+                  interestSavings > 0 ? "text-emerald-900" : interestSavings < 0 ? "text-orange-900" : "text-gray-900"
+                )}>
+                  {Math.abs(timeSavings)} months {timeSavings > 0 ? 'sooner' : 'later'}
+                </div>
               </div>
             </div>
           )}
